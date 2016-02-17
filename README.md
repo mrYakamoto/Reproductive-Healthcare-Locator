@@ -1,4 +1,4 @@
-# reproductive-healthcare-locator
+# Reproductive Healthcare Locator
 
 A tool to map all reproductive health clinics in the USA. 
 This map also shows which "clinics" are actually Crisis Pregnancy Centers. 

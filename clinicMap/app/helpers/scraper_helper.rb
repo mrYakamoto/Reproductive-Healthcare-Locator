@@ -1,15 +1,44 @@
 require 'csv'
+require 'open-uri'
 
 module ScraperHelper
 
   def import_csv_data
-    csv_text = File.read('cpcs_data/parsed_results_three_rows.csv')
+    csv_text = File.read('../data/parsed_results_three_rows.csv')
     csv = CSV.parse(csv_text, :headers => true)
     csv.each do |clinic|
       p clinic
       save_clinic_to_db_with_no_Lat_Lng(clinic)
     end
 
+  end
+  def import_FP_csv_data
+    csv_text = File.read('../data/FP_clinics.csv')
+    csv = CSV.parse(csv_text, :headers => true)
+    csv.each do |clinic|
+      p clinic
+      unless (clinic["Entity Name"].downcase.include? "planned")
+        save_FP_clinic_to_db_with_no_Lat_Lng(clinic)
+      end
+    end
+  end
+
+  def save_FP_clinic_to_db_with_no_Lat_Lng(clinic)
+    name = clinic["Entity Name"]
+    if clinic["Address 2"]
+      full_address = "#{clinic["Address 1"]} #{clinic["Address 2"]}, #{clinic["City"]}, #{clinic["State"]}, #{clinic["Zip"]}"
+      street_address = "#{clinic["Address 1"]} #{clinic["Address 2"]}"
+    else
+      full_address = "#{clinic["Address 1"]}, #{clinic["City"]}, #{clinic["State"]}, #{clinic["Zip"]}"
+      street_address = "#{clinic["Address 1"]}"
+    end
+    city = clinic["City"]
+    state = clinic["State"]
+    zip = clinic["Zip"]
+
+    clinic_object = Clinic.new(name: name, full_address: full_address, street_address: street_address, city: city, state: state, zip: zip, clinic_type: "FP")
+    p clinic_object
+    clinic_object.save!
   end
 
   def save_clinic_to_db_with_no_Lat_Lng(clinic)
@@ -25,21 +54,44 @@ module ScraperHelper
     clinic_object.save!
   end
 
-end
+  def planned_parenthood_scraper
+    state_names_and_abbrev_in_hash.each do |state, abbrev|
+      state_page = Nokogiri::HTML(open("https://www.plannedparenthood.org/health-center/#{abbrev}"))
+      planned_parenthood_state_page_parser(state_page, abbrev)
+    end
+
+    state_page = Nokogiri::HTML(open("https://www.plannedparenthood.org/health-center/AL")) do |config|
+      config.noblanks
+    end
+    p "="*50
+    p "STATE_PAGE"
+    p state_page
+    planned_parenthood_state_page_parser(state_page)
+  end
+
+  def planned_parenthood_state_page_parser(state_page, state_abbrev)
+    state_page_clinics_div_html = state_page.css( 'section.health-center-results-wrap section.center')
+
+    p "*"*60
+    state_page_clinics_div_html.each do |c|
+      name = c.css('h3.question span').text
+      p "="*50
+      p name
+      full_address = "#{c.css('article.location div h4')[0].text} #{c.css('article.location div h4')[1].text}"
+      Clinic.create!(name:name, full_address:full_address, state:state_abbrev, clinic_type:"clinic")
+    end
+  end
 
 
 #   def life_call_parser_cpcs
 #       state_names_in_array.each do |state|
 #         p state
 #         state_page = Nokogiri::HTML(open("http://www.lifecall.org/cpc/#{state}.html"))
-#         state_page_parser(state_page)
+#         life_call_state_page_parser(state_page)
 #       end
 #   end
 
-
-
-
-#   def state_page_parser(state_page)
+#   def life_call_state_page_parser(state_page)
 #     state_page_clinics_div_html = state_page.css( 'div.panes div p')
 #     state_name = state_page.css( 'div.panes div h3.state-name' ).text
 
@@ -173,11 +225,13 @@ end
 #     end
 #   end
 
-#   def state_names_in_array
-#     ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland_dc", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New_Hampshire", "New_Jersey", "New_Mexico", "New_York", "North_Carolina", "North_Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode_Island", "South_Carolina", "South_Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West_Virginia", "Wisconsin", "Wyoming"]
-#   end
+def state_names_in_array
+  ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland_dc", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New_Hampshire", "New_Jersey", "New_Mexico", "New_York", "North_Carolina", "North_Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode_Island", "South_Carolina", "South_Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West_Virginia", "Wisconsin", "Wyoming"]
+end
 
-#   def state_names_and_abbrev_in_hash
-#     {"Alabama"=>"AL", "Alaska"=> "AK", "Arizona"=>"AZ", "Arkansas"=>"AR", "California"=>"CA", "Colorado"=>"CO", "Connecticut"=>"CT", "Delaware"=>"DE", "Florida"=>"FL", "Georgia"=>"GA", "Hawaii"=>"HI", "Idaho"=>"ID", "Illinois"=>"IL", "Indiana"=>"IN", "Iowa"=>"IA", "Kansas"=>"KS", "Kentucky"=>"KY", "Louisiana"=>"LA", "Maine"=>"ME", "Maryland & D.C."=>"MD", "Massachusetts"=>"MA", "Michigan"=>"MI", "Minnesota"=>"MN", "Mississippi"=>"MS", "Missouri"=>"MO", "Montana"=>"MT", "Nebraska"=>"NE", "Nevada"=>"NV", "New_Hampshire"=>"NH", "New Jersey"=>"NJ", "New Mexico"=>"NM", "New York"=>"NY", "North Carolina"=>"NC", "North Dakota"=>"ND", "Ohio"=>"OH", "Oklahoma"=>"OK", "Oregon"=>"OR", "Pennsylvania"=>"PA", "Rhode Island"=>"RI", "South Carolina"=>"SC", "South Dakota"=>"SD", "Tennessee"=>"TN", "Texas"=>"TX", "Utah"=>"UT", "Vermont"=>"VT", "Virginia"=>"VA", "Washington"=>"WA", "West Virginia"=>"WV", "Wisconsin"=>"WI", "Wyoming"=>"WY"}
-#   end
+def state_names_and_abbrev_in_hash
+  {"Alabama"=>"AL", "Alaska"=> "AK", "Arizona"=>"AZ", "Arkansas"=>"AR", "California"=>"CA", "Colorado"=>"CO", "Connecticut"=>"CT", "Delaware"=>"DE", "Florida"=>"FL", "Georgia"=>"GA", "Hawaii"=>"HI", "Idaho"=>"ID", "Illinois"=>"IL", "Indiana"=>"IN", "Iowa"=>"IA", "Kansas"=>"KS", "Kentucky"=>"KY", "Louisiana"=>"LA", "Maine"=>"ME", "Maryland & D.C."=>"MD", "Massachusetts"=>"MA", "Michigan"=>"MI", "Minnesota"=>"MN", "Mississippi"=>"MS", "Missouri"=>"MO", "Montana"=>"MT", "Nebraska"=>"NE", "Nevada"=>"NV", "New_Hampshire"=>"NH", "New Jersey"=>"NJ", "New Mexico"=>"NM", "New York"=>"NY", "North Carolina"=>"NC", "North Dakota"=>"ND", "Ohio"=>"OH", "Oklahoma"=>"OK", "Oregon"=>"OR", "Pennsylvania"=>"PA", "Rhode Island"=>"RI", "South Carolina"=>"SC", "South Dakota"=>"SD", "Tennessee"=>"TN", "Texas"=>"TX", "Utah"=>"UT", "Vermont"=>"VT", "Virginia"=>"VA", "Washington"=>"WA", "West Virginia"=>"WV", "Wisconsin"=>"WI", "Wyoming"=>"WY"}
+end
+
+end
 

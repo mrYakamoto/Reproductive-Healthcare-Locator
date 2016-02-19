@@ -18,6 +18,7 @@ ActiveRecord::Schema.define(version: 20160218023240) do
 
   create_table "clinics", force: :cascade do |t|
     t.string   "name"
+    t.string   "full_address"
     t.string   "street_address"
     t.string   "city"
     t.string   "state"

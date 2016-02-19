@@ -2,6 +2,7 @@ class CreateClinics < ActiveRecord::Migration
   def change
     create_table :clinics do |t|
       t.string :name
+      t.string :full_address
       t.string :street_address
       t.string :city
       t.string :state

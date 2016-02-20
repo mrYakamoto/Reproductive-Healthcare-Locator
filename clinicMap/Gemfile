@@ -31,6 +31,8 @@ gem 'gmaps4rails'
 gem 'rest-client'
 gem 'hirb'
 
+
+
 group :development, :test do
   gem 'byebug'
 

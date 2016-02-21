@@ -1,6 +1,7 @@
 require 'rest-client'
 
 class Clinic < ActiveRecord::Base
+  geocoded_by :address, :latitude  => :lat, :longitude => :lng
 
 
 # sets lat and lng values for clinic objects in db

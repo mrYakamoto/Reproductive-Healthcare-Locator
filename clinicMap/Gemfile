@@ -28,6 +28,8 @@ gem 'sdoc', '~> 0.4.0', group: :doc
 
 gem 'gmaps4rails'
 
+gem 'geocoder'
+
 gem 'rest-client'
 gem 'hirb'
 

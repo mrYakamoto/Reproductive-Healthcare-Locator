@@ -22,4 +22,11 @@ class ClinicController < ApplicationController
     end
   end
 
+  def geolocate
+
+    unless !(request.xhr?)
+      @clinics = Clinic.near(params[:location], 100)
+      render :json => @clinics
+    end
+  end
 end

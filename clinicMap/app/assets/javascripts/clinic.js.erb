@@ -21,8 +21,7 @@ function buttonsListener(){
       console.log("BACK FROM THE SERVER");
       clearMarkers();
       for (var i = 0; i < clinicArray.length; i++){
-        clinicArray[i].lng = parseFloat(clinicArray[i].lng);
-        clinicArray[i].lat = parseFloat(clinicArray[i].lat);
+        parseLatLng(clinicArray[i]);
         createMarker(clinicArray[i]);
       }
 
@@ -79,6 +78,7 @@ function initMap(location){
         mapTypeIds: [google.maps.MapTypeId.ROADMAP]
       }
     });
+    nearbyClinics(location);
   }
   else {
     map = new google.maps.Map(document.getElementById('map'), {
@@ -89,6 +89,32 @@ function initMap(location){
       }
     });
   }
+}
+
+function nearbyClinics(location){
+  var data = {location: [location.lat, location.lng]};
+  $.ajax({
+    url: '/geolocate',
+    method: 'GET',
+    dataType: 'json',
+    data: data
+  })
+  .done(function(response){
+    var clinicArray = response;
+    for(var i = 0; i < clinicArray.length; i++){
+      var clinic = parseLatLng(clinicArray[i]);
+      createMarker(clinic);
+    }
+  })
+  .error(function(unknown, xhr, error){
+    alert(error);
+  })
+}
+
+function parseLatLng(clinicObj){
+  clinicObj.lat = parseFloat(clinicObj.lat);
+  clinicObj.lng = parseFloat(clinicObj.lng);
+  return clinicObj;
 }
 
 

@@ -55,8 +55,24 @@ function createMarker(clinicObj){
     title: clinicObj.name,
     icon: image
   });
+  setInfoWindow(marker, clinicObj);
   markers.push(marker);
 }
+
+function setInfoWindow(marker, clinicObj){
+
+  var queryString = clinicObj.name + ' ' + clinicObj.full_address;
+  queryString = queryString.split(' ').join('+');
+  var infowindow = new google.maps.InfoWindow({
+    content: '<a href="http://www.google.com/search?q=' + queryString + '" target="_blank">' + clinicObj.name + '</a>'
+  });
+  marker.addListener('click', function() {
+    infowindow.open(map, marker);
+  });
+}
+
+
+
 
 function setMapOnAllMarkers(map){
   for (var i = 0; i < markers.length; i++) {

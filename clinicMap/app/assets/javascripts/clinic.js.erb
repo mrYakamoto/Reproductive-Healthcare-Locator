@@ -35,7 +35,7 @@ function buttonsListener(){
 function formListener(){
   $('form').submit (function(e){
     e.preventDefault();
-    var input = this.elements["search_input"].value;
+    var input = this.elements["search-input"].value;
     getLatLng(input);
   })
 }
@@ -66,13 +66,10 @@ function setInfoWindow(marker, clinicObj){
   var infowindow = new google.maps.InfoWindow({
     content: '<a href="http://www.google.com/search?q=' + queryString + '" target="_blank">' + clinicObj.name + '</a>'
   });
-  marker.addListener('click', function() {
-    infowindow.open(map, marker);
-  });
+    marker.addListener('click', function() {
+      infowindow.open(map, marker);
+    });
 }
-
-
-
 
 function setMapOnAllMarkers(map){
   for (var i = 0; i < markers.length; i++) {
@@ -80,10 +77,12 @@ function setMapOnAllMarkers(map){
   }
 }
 
+
 function clearMarkers() {
   setMapOnAllMarkers(null);
   markers = [];
 }
+
 
 function initMap(location){
   if(location){

@@ -112,11 +112,28 @@ hr {
 }
 
 .navbar-fixed-top .navbar-key {
-    padding: 0 0 0 15px;
-    float: right;
+    margin-top: 25px;
+        padding: 15px 0 0 20px;
+        display: inline-block;
+        float: right;
 }
 
 footer { padding: 80px 0; }
+
+@media(max-width: 767px){
+  #custom-search-input {
+    clear: both;
+    margin: 0;
+    float: left;
+    width: 100% !important;
+  }
+  .navbar-fixed-top .navbar-key {
+        margin-top: 25px;
+        padding: 15px 0 0 20px;
+        display: inline-block;
+        float:left;
+    }
+}
 
 @media(min-width:768px) {
     body {
@@ -128,6 +145,7 @@ footer { padding: 80px 0; }
         padding: 15px 0 0 20px;
         display: inline-block;
     }
+
 }
 
 #custom-search-input{

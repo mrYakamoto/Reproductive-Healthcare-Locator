@@ -1,0 +1,2 @@
+module ClinicControllerHelper
+end

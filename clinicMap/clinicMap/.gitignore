@@ -15,5 +15,6 @@
 
 .env
 
-
+config/secrets.yml
+Gemfile.lock
 **/.DS_Store

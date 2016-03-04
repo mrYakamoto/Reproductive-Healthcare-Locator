@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-# gem 'dotenv-rails', :groups => [:development, :test]
+gem 'dotenv-rails', :groups => [:development, :test]
 
 
 gem 'rails', '4.2.5'
@@ -33,7 +33,7 @@ gem 'geocoder'
 gem 'rest-client'
 gem 'hirb'
 
-gem 'rails_12factor'
+gem 'rails_12factor', group: :production
 
 group :development, :test do
   gem 'byebug'

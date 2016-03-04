@@ -1,0 +1,219 @@
+$('document').ready(function(){
+  initMap();
+  buttonsListener();
+  formListener();
+});
+
+var map;
+var markers = [];
+
+function buttonsListener(){
+  $('ul.masthead-nav button').on ('click', function(e){
+    e.preventDefault();
+    var type = {type: this.id}
+    $.ajax({
+      url: "/clinics",
+      method: 'GET',
+      data: type,
+      dataType: 'json'
+    })
+    .done(function(clinicArray){
+      console.log("BACK FROM THE SERVER");
+      clearMarkers();
+      for (var i = 0; i < clinicArray.length; i++){
+        parseLatLng(clinicArray[i]);
+        createMarker(clinicArray[i]);
+      }
+
+    })
+    .error(function(unknown, xhr, error){
+      console.log(error)
+    })
+  })
+}
+
+function formListener(){
+  $('form').submit (function(e){
+    e.preventDefault();
+    var input = this.elements["search-input"].value;
+    getLatLng(input);
+  })
+}
+
+function createMarker(clinicObj){
+  var clinicLoc = { lat: clinicObj.lat, lng: clinicObj.lng };
+  if (clinicObj.clinic_type == "CPC"){
+    var image = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
+  } else {
+    var image = "http://maps.google.com/mapfiles/ms/icons/green-dot.png";
+  }
+
+  var marker = new google.maps.Marker({
+    position: clinicLoc,
+    map: map,
+    // animation: google.maps.Animation.DROP,
+    title: clinicObj.name,
+    icon: image
+  });
+  setInfoWindow(marker, clinicObj);
+  markers.push(marker);
+}
+
+function setInfoWindow(marker, clinicObj){
+
+  var queryString = clinicObj.name + ' ' + clinicObj.full_address;
+  queryString = queryString.split(' ').join('+');
+  if (clinicObj.clinic_type == "CPC"){
+    var infowindow = new google.maps.InfoWindow({
+      content: '<a class="CPC" href="http://www.google.com/search?q=' + queryString + '" target="_blank">' + clinicObj.name + '</a>'
+    });
+  } else {
+    var infowindow = new google.maps.InfoWindow({
+      content: '<a class="FP" href="http://www.google.com/search?q=' + queryString + '" target="_blank">' + clinicObj.name + '</a>'
+    });
+  }
+
+  marker.addListener('click', function() {
+    infowindow.open(map, marker);
+  });
+}
+
+function setMapOnAllMarkers(map){
+  for (var i = 0; i < markers.length; i++) {
+    markers[i].setMap(map);
+  }
+}
+
+
+function clearMarkers() {
+  setMapOnAllMarkers(null);
+  markers = [];
+}
+
+
+function initMap(location){
+  if(location){
+    map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 11,
+      center: new google.maps.LatLng(location.lat, location.lng),
+      mapTypeControlOptions: {
+        mapTypeIds: [google.maps.MapTypeId.ROADMAP]
+      }
+    });
+    nearbyClinics(location);
+  }
+  else {
+    map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 4,
+      center: new google.maps.LatLng(40.09024, -95.712891),
+      mapTypeControlOptions: {
+        mapTypeIds: [google.maps.MapTypeId.ROADMAP]
+      }
+    });
+  }
+  var styles = [
+  {
+    featureType: "all",
+    stylers: [
+    { saturation: -80 }
+    ]
+  },{
+    featureType: "road.arterial",
+    elementType: "geometry",
+    stylers: [
+    { hue: "#00ffee" },
+    { saturation: 50 }
+    ]
+  },{
+    featureType: "poi.business",
+    elementType: "labels",
+    stylers: [
+    { visibility: "off" }
+    ]
+  },{
+    "featureType": "administrative.province",
+    "elementType": "geometry",
+    "stylers": [
+      { "hue": "#00ffee" },
+      { "saturation": 81 },
+      { "weight": 1.4 }
+    ]
+  },{
+    "featureType": "administrative.province",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      { "hue": "#00ddff" },
+      { "visibility": "on" },
+      { "lightness": -100 },
+      { "saturation": 30 },
+      { "color": "#010101" },
+      { "gamma": 0.01 }
+    ]
+  },{
+    "featureType": "administrative.country",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      { "color": "#808080" },
+      { "lightness": -95 },
+      { "saturation": 2 },
+      { "weight": 0.7 }
+    ]
+  },{
+    "featureType": "administrative.country",
+    "elementType": "labels",
+    "stylers": [
+      { "visibility": "off" }
+    ]
+  }
+  ];
+  map.setOptions({styles: styles});
+}
+
+function nearbyClinics(location){
+  var data = {location: [location.lat, location.lng]};
+  $.ajax({
+    url: '/geolocate',
+    method: 'GET',
+    dataType: 'json',
+    data: data
+  })
+  .done(function(response){
+    var clinicArray = response;
+    for(var i = 0; i < clinicArray.length; i++){
+      var clinic = parseLatLng(clinicArray[i]);
+      createMarker(clinic);
+    }
+  })
+  .error(function(unknown, xhr, error){
+    alert(error);
+  })
+}
+
+function parseLatLng(clinicObj){
+  clinicObj.lat = parseFloat(clinicObj.lat);
+  clinicObj.lng = parseFloat(clinicObj.lng);
+  return clinicObj;
+}
+
+
+function getLatLng(input){
+  $.ajax({
+    url: "https://maps.googleapis.com/maps/api/geocode/json?address="+input+"&key=" + "<%=ENV['GOOGLE_API']%>",
+    method: 'GET'
+  })
+  .done(function(response){
+    if (response["status"] == "OK"){
+      var location = {};
+      location.lat = response["results"][0]["geometry"]["location"]["lat"];
+      location.lng = response["results"][0]["geometry"]["location"]["lng"];
+      initMap(location);
+    }
+    else {
+      alert("Oops, we weren't able to locate you. Try again");
+    }
+  })
+  .error(function(unknown, xhr, error){
+    alert(error);
+  })
+
+}

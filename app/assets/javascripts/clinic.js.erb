@@ -2,6 +2,7 @@ $('document').ready(function(){
   initMap();
   buttonsListener();
   formListener();
+  animate();
 });
 
 var map;
@@ -217,3 +218,13 @@ function getLatLng(input){
   })
 
 }
+
+// animation
+function animate(){
+  $( "#logo-image" ).animate({
+    opacity: 1.00,
+  }, 500, function() {
+  });
+
+}
+
